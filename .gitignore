@@ -1,0 +1,4 @@
+# Ignore GHC build artifacts
+*.hi
+*.o
+*.exe
