@@ -1,4 +1,11 @@
-# Ignore GHC build artifacts
+# Ignore build artifacts
 *.hi
 *.o
 *.exe
+
+# Ignore backups or editor files (optional)
+*.swp
+*.bak
+
+# Ignore VS Code settings (optional)
+.vscode/
