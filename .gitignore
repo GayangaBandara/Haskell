@@ -3,9 +3,9 @@
 *.o
 *.exe
 
-# Ignore backups or editor files (optional)
+# Ignore backups or editor files 
 *.swp
 *.bak
 
-# Ignore VS Code settings (optional)
+
 .vscode/
