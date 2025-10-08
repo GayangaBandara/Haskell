@@ -5,22 +5,29 @@ module Go
   ) where
 
 import qualified Data.Set as S
+import qualified Data.List as L
 
--- Coordinate type (row, column)
+-- We’ll represent a coordinate as (row, column), 1-based
 type Coord = (Int, Int)
 
--- Owner of a territory
+-- Who owns a territory
 data Owner = Black | White | None
-  deriving (Eq, Ord, Show)   -- ✅ Added Ord
+  deriving (Eq, Show, Ord)   -- Added Ord so we can use S.insert without error
 
--- Return all territories on the board
+-- Return all territories on the board:
+-- For each group of connected empty intersections, figure out
+-- which player’s stones border it.
 territories :: [String] -> [(Owner, [Coord])]
 territories board = goAll empties S.empty
   where
     h = length board
-    w = if null board then 0 else length (head board)
+    w = case L.uncons board of
+          Nothing       -> 0
+          Just (row, _) -> length row
 
+    -- List of all empty positions
     empties = [p | r <- [1..h], c <- [1..w], let p=(r,c), cell p==' ']
+
     cell (r,c) = board !! (r-1) !! (c-1)
 
     goAll [] _ = []
@@ -55,6 +62,7 @@ territories board = goAll empties S.empty
       | os == S.singleton White = White
       | otherwise               = None
 
+-- Get the territory for a single coordinate, or Nothing if it’s not empty.
 territoryFor :: [String] -> Coord -> Maybe (Owner, [Coord])
 territoryFor board p
   | not (inBounds p) = Nothing
@@ -62,7 +70,9 @@ territoryFor board p
   | otherwise        = Just (flood p)
   where
     h = length board
-    w = if null board then 0 else length (head board)
+    w = case L.uncons board of
+          Nothing       -> 0
+          Just (row, _) -> length row
 
     cell (r,c) = board !! (r-1) !! (c-1)
     inBounds (r,c) = r>=1 && r<=h && c>=1 && c<=w
