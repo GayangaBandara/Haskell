@@ -6,29 +6,23 @@ module Go
 
 import qualified Data.Set as S
 
--- We’ll represent a coordinate as (row, column), 1-based
+-- Coordinate type (row, column)
 type Coord = (Int, Int)
 
--- Who owns a territory
+-- Owner of a territory
 data Owner = Black | White | None
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)   -- ✅ Added Ord
 
--- Return all territories on the board:
--- For each group of connected empty intersections, figure out
--- which player’s stones border it.
+-- Return all territories on the board
 territories :: [String] -> [(Owner, [Coord])]
 territories board = goAll empties S.empty
   where
-    h = length board                         -- number of rows
-    w = if null board then 0 else length (head board)  -- number of columns
+    h = length board
+    w = if null board then 0 else length (head board)
 
-    -- List of all empty positions
     empties = [p | r <- [1..h], c <- [1..w], let p=(r,c), cell p==' ']
+    cell (r,c) = board !! (r-1) !! (c-1)
 
-    cell (r,c) = board !! (r-1) !! (c-1)     -- get character at coordinate
-
-    -- Go through all empty cells, skip ones already visited,
-    -- flood-fill each group and determine its owner.
     goAll [] _ = []
     goAll (p:ps) vis
       | p `S.member` vis = goAll ps vis
@@ -37,7 +31,6 @@ territories board = goAll empties S.empty
               vis' = vis `S.union` S.fromList grp
           in (owner, grp) : goAll ps vis'
 
-    -- Flood-fill from one empty cell
     flood start = explore S.empty S.empty [start]
       where
         explore empties owners [] = (ownerFrom owners, S.toList empties)
@@ -48,7 +41,6 @@ territories board = goAll empties S.empty
                   (newEmpty, newOwners) = foldr classify ([], owners) ns
               in explore (S.insert q empties) newOwners (qs ++ newEmpty)
 
-        -- For each neighbour, collect more empty cells or bordering stone colours
         classify n (es, os)
           | inBounds n && cell n == ' ' = (n:es, os)
           | inBounds n && cell n == 'B' = (es, S.insert Black os)
@@ -58,13 +50,11 @@ territories board = goAll empties S.empty
         inBounds (r,c) = r>=1 && r<=h && c>=1 && c<=w
         neighbors (r,c) = [(r-1,c),(r+1,c),(r,c-1),(r,c+1)]
 
-    -- If only one colour touches the empty area, that’s the owner.
     ownerFrom os
       | os == S.singleton Black = Black
       | os == S.singleton White = White
       | otherwise               = None
 
--- Get the territory for a single coordinate, or Nothing if it’s not empty.
 territoryFor :: [String] -> Coord -> Maybe (Owner, [Coord])
 territoryFor board p
   | not (inBounds p) = Nothing
